@@ -1,12 +1,8 @@
 import React, { useState } from 'react';
+import { Error } from './Error';
+import PropTypes from 'prop-types';
 
-export const Formulario = () => {
-  // State del Formulario
-  const [busqueda, setBusqueda] = useState({
-    ciudad: '',
-    pais: ''
-  });
-
+export const Formulario = ({ busqueda, guardarBusqueda, guardarConsulta }) => {
   const [error, setError] = useState(false);
 
   // Extraer informacion de busqueda
@@ -15,7 +11,7 @@ export const Formulario = () => {
   // Función que coloca los elementos del state
   const handleInputChange = e => {
     // Actualizar el state
-    setBusqueda({
+    guardarBusqueda({
       ...busqueda,
       [e.target.name]: e.target.value
     });
@@ -33,13 +29,14 @@ export const Formulario = () => {
 
     // Paso validación
     setError(false);
+
+    // Consulta a la API
+    guardarConsulta(true);
   };
 
   return (
     <form onSubmit={handleSubmit}>
-      {error && (
-        <p className="red darken-4 error">Todos los campos son obligatorios</p>
-      )}
+      {error && <Error mensaje="Todos los campos son obligatorios" />}
 
       <div className="input-field col s12">
         <input
@@ -54,7 +51,7 @@ export const Formulario = () => {
 
       <div className="input-field col s12">
         <select name="pais" id="pais" value={pais} onChange={handleInputChange}>
-          <option value="" disabled selected>
+          <option value="" disabled defaultValue="selected">
             --Seleccione un país--
           </option>
           <option value="US">Estados Unidos</option>
@@ -78,4 +75,10 @@ export const Formulario = () => {
       </div>
     </form>
   );
+};
+
+Formulario.propTypes = {
+  busqueda: PropTypes.object.isRequired,
+  guardarBusqueda: PropTypes.func.isRequired,
+  guardarConsulta: PropTypes.func.isRequired
 };
