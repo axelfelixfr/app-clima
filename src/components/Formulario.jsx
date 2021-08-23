@@ -1,42 +1,62 @@
 import React, { useState } from 'react';
 import { Error } from './Error';
 import PropTypes from 'prop-types';
+import { useForm } from '../hooks/useForm';
 
-export const Formulario = ({ busqueda, guardarBusqueda, guardarConsulta }) => {
-  const [error, setError] = useState(false);
+export const Formulario = ({ guardarResultado, guardarError }) => {
+  const initialState = {
+    ciudad: '',
+    pais: ''
+  };
+
+  // useForm
+  const [formValues, handleInputChange] = useForm(initialState);
+
+  // State para validacion del formulario
+  const [validacion, setValidacion] = useState(false);
 
   // Extraer informacion de busqueda
-  const { ciudad, pais } = busqueda;
+  const { ciudad, pais } = formValues;
 
-  // Función que coloca los elementos del state
-  const handleInputChange = e => {
-    // Actualizar el state
-    guardarBusqueda({
-      ...busqueda,
-      [e.target.name]: e.target.value
-    });
+  const consultarAPI = async () => {
+    const apiKey = process.env.REACT_APP_API;
+    const url = `https://api.openweathermap.org/data/2.5/weather?q=${ciudad},${pais}&appid=${apiKey}&units=metric`;
+    const respuesta = await fetch(url);
+    const resultado = await respuesta.json();
+
+    // Se guarda el resultado de la API en el state de resultado
+    guardarResultado(resultado);
+
+    // Si no encontro resultados, mandara el cod '404'
+    if (resultado.cod === '404') {
+      // Mandamos el error para que muestre el componente de Error
+      guardarError(true);
+    } else {
+      // Si el cod no es '404' pasa a false el error
+      guardarError(false);
+    }
   };
 
   // Cuando se envie el formulario
   const handleSubmit = e => {
     e.preventDefault();
 
-    // Validar
+    // Validar antes de hacer consulta
     if (ciudad.trim() === '' || pais.trim() === '') {
-      setError(true);
+      setValidacion(true);
       return;
     }
 
     // Paso validación
-    setError(false);
+    setValidacion(false);
 
-    // Consulta a la API
-    guardarConsulta(true);
+    // Ejecuta la consulta
+    consultarAPI();
   };
 
   return (
     <form onSubmit={handleSubmit}>
-      {error && <Error mensaje="Todos los campos son obligatorios" />}
+      {validacion && <Error mensaje="Todos los campos son obligatorios" />}
 
       <div className="input-field col s12">
         <input
@@ -78,7 +98,6 @@ export const Formulario = ({ busqueda, guardarBusqueda, guardarConsulta }) => {
 };
 
 Formulario.propTypes = {
-  busqueda: PropTypes.object.isRequired,
-  guardarBusqueda: PropTypes.func.isRequired,
-  guardarConsulta: PropTypes.func.isRequired
+  guardarResultado: PropTypes.func.isRequired,
+  guardarError: PropTypes.func.isRequired
 };
